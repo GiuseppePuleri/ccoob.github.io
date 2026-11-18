@@ -4,6 +4,13 @@ export const copy = {
   brand: 'CrossCheck OOB',
   tagline: 'Il backup che resta sveglio',
   enter: 'Entra nella scena',
+  gate: {
+    title: 'Accesso riservato',
+    lead: 'Inserisci la password per aprire la presentazione.',
+    passwordLabel: 'Password',
+    submit: 'Entra',
+    error: 'Password non corretta.',
+  },
   excursion: 'Simula Sbalzo Termico',
   excursionActive: 'Sbalzo in corso',
   reset: 'Ripristina',

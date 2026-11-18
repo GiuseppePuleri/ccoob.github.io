@@ -1,8 +1,11 @@
 import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { startDirector } from './simulation/director'
+import { useAppStore } from './store/useAppStore'
+import { isAccessGranted } from './ui/auth/access'
+import { PasswordGate } from './ui/auth/PasswordGate'
 import { Intro } from './ui/loader/Intro'
 import { WebglFallback } from './ui/loader/WebglFallback'
 import { Overlay } from './ui/layout/Overlay'
-import { useAppStore } from './store/useAppStore'
 
 const SceneCanvas = lazy(() => import('./scene/SceneCanvas').then((module) => ({ default: module.SceneCanvas })))
 
@@ -37,13 +40,28 @@ function supportsWebGL(): boolean {
 }
 
 export function App() {
+  const [unlocked, setUnlocked] = useState(isAccessGranted)
   const [webgl] = useState(supportsWebGL)
 
   useEffect(() => {
+    if (!unlocked) return
+    startDirector()
+  }, [unlocked])
+
+  useEffect(() => {
+    if (!unlocked) return
     if (useAppStore.getState().appPhase === 'explore') return
     const id = window.setTimeout(() => useAppStore.getState().finishIntro(), 2800)
     return () => window.clearTimeout(id)
-  }, [])
+  }, [unlocked])
+
+  if (!unlocked) {
+    return (
+      <div className="xo-app">
+        <PasswordGate onUnlock={() => setUnlocked(true)} />
+      </div>
+    )
+  }
 
   return (
     <div className="xo-app">
