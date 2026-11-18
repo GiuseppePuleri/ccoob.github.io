@@ -105,6 +105,7 @@ function runReset(): void {
     alarmPhase: 'idle',
     temperatureC: thermal.nominalC,
     selectedDevice: null,
+    isAnimatingCamera: false,
     liveMessage: copy.live.reset,
   })
 }

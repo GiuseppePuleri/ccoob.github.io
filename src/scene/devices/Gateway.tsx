@@ -39,6 +39,10 @@ export function Gateway() {
         <cylinderGeometry args={[0.0035, 0.0035, 0.2, 8]} />
         <meshStandardMaterial color="#9aa3ae" metalness={0.8} roughness={0.3} />
       </mesh>
+      <mesh position={[0, 0.11, -0.032]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.012, 0.01, 0.014, 16]} />
+        <meshStandardMaterial color="#111315" roughness={0.72} metalness={0.08} />
+      </mesh>
       <Led position={[-0.04, 0.05, 0.028]} colorOf={() => palette.ledOn} />
       <Led position={[0, 0.05, 0.028]} colorOf={() => alarmTint(palette.oob)} />
       <Led position={[0.04, 0.05, 0.028]} colorOf={() => alarmTint(palette.oob)} />

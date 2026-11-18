@@ -17,7 +17,7 @@ L'app è una singola scena 3D ospitata su GitHub Pages, senza backend.
 
 - **Estetica prima del dettaglio.** I dispositivi sono stilizzati e generici: forme pulite, plastica opaca chiara, un LED ciascuno. Nessun CAD, nessuna scheda tecnica a schermo. Il frigo in acciaio è l'unico oggetto con materiali ricchi.
 - **Solo il canale OOB.** In scena ci sono frigo, sensore, gateway e smartphone. L'unico segnale animato è quello che va dal sensore al gateway. Niente rete nativa, niente router.
-- **Diorama minimale.** Fondo scuro, una pedana, una parete di fondo e un tavolo per gateway e smartphone. Non è una stanza realistica.
+- **Diorama minimale.** Fondo scuro, una pedana e un tavolo per gateway e smartphone. Una piccola quinta tecnica con presa e cavo rende esplicita l'alimentazione del gateway.
 - **Due colori, due significati.** Un colore d'accento per il canale OOB, rosso (con ambra di preavviso) riservato all'allarme.
 - **Zustand, non Context.** I componenti 3D leggono lo stato dentro il frame loop con `getState()` senza provocare re-render, e la logica temporizzata vive fuori da React.
 - **Un solo scenario.** Lo sbalzo termico e la sua escalation. Tutto il resto è esplorazione.
@@ -110,6 +110,9 @@ interface UiState {
   appPhase: AppPhase;
   selectedDevice: DeviceId | null;   // pop-up aperto
   hoveredDevice: DeviceId | null;
+  targetPosition: [number, number, number];
+  lookAtTarget: [number, number, number];
+  isAnimatingCamera: boolean;
   quality: QualityTier;
   reducedMotion: boolean;
 }
@@ -117,6 +120,8 @@ interface UiState {
 interface UiActions {
   selectDevice(id: DeviceId | null): void;
   hoverDevice(id: DeviceId | null): void;
+  moveCamera(targetPosition: [number, number, number], lookAtTarget: [number, number, number]): void;
+  releaseCamera(): void;
   finishIntro(): void;
   setQuality(tier: QualityTier): void;
 }
@@ -203,8 +208,8 @@ Il superamento della soglia fa partire l'escalation: email, dopo due secondi SMS
 | Componente | Responsabilità | Legge dallo store |
 |---|---|---|
 | `SceneCanvas` | Canvas, dpr, Suspense, monitor delle prestazioni | `quality` |
-| `CameraRig` | Orbita vincolata e transizioni verso i preset | `selectedDevice`, `alarmPhase` |
-| `Room`, `Lighting` | Diorama con luce baked, HDRI, luce d'allarme | `alarmPhase` |
+| `CameraRig` | Intro guidata; poi free roaming. Su comando anima verso `targetPosition`/`lookAtTarget` e rilascia al arrivo o al drag | `appPhase`, `isAnimatingCamera`, `targetPosition`, `lookAtTarget` |
+| `Room`, `Lighting` | Diorama, pannello elettrico e cavo del gateway, HDRI, luce d'allarme | `alarmPhase` |
 | `Fridge` | Apertura porta, scocca semitrasparente per mostrare il sensore | `selectedDevice`, `alarmPhase` |
 | `Sensor`, `Gateway` | LED emissivi che passano ad ambra in preavviso e a rosso in allarme | `alarmPhase` |
 | `Smartphone` | Cambio texture schermo, vibrazione | `alarmPhase` |
@@ -239,11 +244,11 @@ Durante l'escalation i pop-up si nascondono: lo spazio è della notifica del tel
 ## UX
 
 - Dopo il caricamento, una breve panoramica di camera presenta i quattro elementi, poi l'utente esplora liberamente.
-- L'orbita ha limiti di angolo e zoom, mai volo libero. Il clic su un dispositivo porta la camera al suo preset e apre il pop-up di lato. Si chiude con "Chiudi", con un secondo clic sul dispositivo o con un clic nel vuoto.
-- **Sbalzo termico:** la temperatura sale nell'HUD, il frigo emette una luce rossa e i segnali passano ad ambra e rosso. La camera va sullo smartphone, dove arrivano in sequenza email, SMS e chiamata vocale a tutto schermo.
+- Dopo l'intro la camera è libera (rotazione, pan, zoom). I bottoni di navigazione e il clic su un dispositivo avviano una transizione interrompibile (`isAnimatingCamera`): all'arrivo, o al primo drag, il controllo torna subito all'utente. Il pop-up si chiude con "Chiudi", con un secondo clic sul dispositivo o con un clic nel vuoto.
+- **Sbalzo termico:** parte anche l'auto-zoom sullo smartphone (stesso meccanismo dei bottoni). La temperatura sale nell'HUD, il frigo emette una luce rossa e i segnali passano ad ambra e rosso; sullo schermo arrivano email, SMS e chiamata vocale.
 - **Gabbia di Faraday:** in focus sul frigo la porta si apre e la scocca diventa semitrasparente. Il sensore resta visibile e cliccabile, e gli anelli OOB escono dalla porta.
 - L'HUD è in alto e gli scenari in basso. I pop-up seguono il proprio dispositivo e restano dentro lo schermo.
-- Con `prefers-reduced-motion` le transizioni di camera diventano tagli, e l'allarme è annunciato con `aria-live`.
+- Con `prefers-reduced-motion` la panoramica iniziale diventa un taglio, e l'allarme è annunciato con `aria-live`.
 
 ## Modelli 3D
 

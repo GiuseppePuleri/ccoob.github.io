@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
+import { presetFor } from '../../config/devices'
 import type { DeviceId } from '../../store/types'
 import { useAppStore } from '../../store/useAppStore'
 
@@ -16,6 +17,7 @@ function aimsAtSensorInside(event: ThreeEvent<MouseEvent>): boolean {
 export function useDeviceInteraction(id: DeviceId) {
   const selectDevice = useAppStore((state) => state.selectDevice)
   const hoverDevice = useAppStore((state) => state.hoverDevice)
+  const moveCamera = useAppStore((state) => state.moveCamera)
   const userData = useMemo(() => ({ device: id }), [id])
 
   const onClick = useCallback(
@@ -23,9 +25,15 @@ export function useDeviceInteraction(id: DeviceId) {
       if (id === 'fridge' && aimsAtSensorInside(event)) return
       event.stopPropagation()
       const current = useAppStore.getState().selectedDevice
-      selectDevice(current === id ? null : id)
+      if (current === id) {
+        selectDevice(null)
+        return
+      }
+      const preset = presetFor(id)
+      selectDevice(id)
+      moveCamera(preset.position, preset.target)
     },
-    [id, selectDevice],
+    [id, moveCamera, selectDevice],
   )
 
   const onPointerOver = useCallback(

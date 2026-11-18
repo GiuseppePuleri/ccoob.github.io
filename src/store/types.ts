@@ -28,6 +28,12 @@ export interface UiState {
   /** Dispositivo con il pop-up aperto. */
   selectedDevice: DeviceId | null
   hoveredDevice: DeviceId | null
+  /** Destinazione dell'ultimo comando di camera. */
+  targetPosition: [number, number, number]
+  /** Punto osservato dalla camera e da OrbitControls durante la transizione. */
+  lookAtTarget: [number, number, number]
+  /** `true` solo finché il controller sta raggiungendo la destinazione. */
+  isAnimatingCamera: boolean
   quality: QualityTier
   reducedMotion: boolean
   /** Testo per la regione aria-live. */
@@ -37,6 +43,11 @@ export interface UiState {
 export interface UiActions {
   selectDevice: (id: DeviceId | null) => void
   hoverDevice: (id: DeviceId | null) => void
+  moveCamera: (
+    targetPosition: [number, number, number],
+    lookAtTarget: [number, number, number],
+  ) => void
+  releaseCamera: () => void
   finishIntro: () => void
   setQuality: (tier: QualityTier) => void
   setReducedMotion: (value: boolean) => void

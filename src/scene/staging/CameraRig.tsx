@@ -1,66 +1,90 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
+import { damp3 } from 'maath/easing'
 import * as THREE from 'three'
-import { cameraAlarm, cameraHome, cameraIntro, devices } from '../../config/devices'
-import { isEscalating } from '../../store/selectors'
-import type { DeviceId } from '../../store/types'
+import { cameraHome, cameraIntro } from '../../config/devices'
 import { useAppStore } from '../../store/useAppStore'
 
-type RigControls = { target: THREE.Vector3; update: () => void } | null
+type RigControls = {
+  target: THREE.Vector3
+  enabled: boolean
+  update: () => void
+} | null
 
+/** Sotto questa distanza la transizione si considera conclusa e torna il free roaming. */
+const ARRIVAL = 0.05
+
+/**
+ * Controller della camera.
+ * - Intro: panoramica guidata fino a `cameraHome`.
+ * - Comandi mirati: interpola verso `targetPosition` / `lookAtTarget` solo mentre
+ *   `isAnimatingCamera` è true, poi rilascia il controllo.
+ * - Drag dell'utente: interrompe subito l'animazione.
+ */
 export function CameraRig() {
   const exploring = useAppStore((state) => state.appPhase === 'explore')
-  const dragging = useRef(false)
   const introStart = useRef(performance.now())
   const controls = useRef<RigControls>(null)
+  const dragging = useRef(false)
 
-  const poses = useMemo(() => {
-    const byDevice = {} as Record<DeviceId, { position: THREE.Vector3; target: THREE.Vector3 }>
-    for (const device of devices) {
-      byDevice[device.id] = {
-        position: new THREE.Vector3(...device.cameraPreset.position),
-        target: new THREE.Vector3(...device.cameraPreset.target),
-      }
-    }
-    return {
-      byDevice,
+  const scratch = useMemo(
+    () => ({
       homePos: new THREE.Vector3(...cameraHome.position),
       homeTarget: new THREE.Vector3(...cameraHome.target),
       introPos: new THREE.Vector3(...cameraIntro.position),
       introTarget: new THREE.Vector3(...cameraIntro.target),
-      alarmPos: new THREE.Vector3(...cameraAlarm.position),
-      alarmTarget: new THREE.Vector3(...cameraAlarm.target),
+      destination: new THREE.Vector3(),
+      lookAt: new THREE.Vector3(),
       pos: new THREE.Vector3(),
       target: new THREE.Vector3(),
-    }
-  }, [])
+    }),
+    [],
+  )
 
   useFrame((state, delta) => {
     const rig = controls.current
-    if (!rig || dragging.current) return
-    const { selectedDevice, alarmPhase, appPhase, reducedMotion } = useAppStore.getState()
+    if (!rig) return
+    const store = useAppStore.getState()
 
-    if (appPhase !== 'explore') {
-      const t = reducedMotion ? 1 : Math.min(1, (performance.now() - introStart.current) / 2400)
+    if (store.appPhase !== 'explore') {
+      const t = store.reducedMotion
+        ? 1
+        : Math.min(1, (performance.now() - introStart.current) / 2400)
       const eased = 1 - (1 - t) ** 3
-      poses.pos.lerpVectors(poses.introPos, poses.homePos, eased)
-      poses.target.lerpVectors(poses.introTarget, poses.homeTarget, eased)
-    } else if (selectedDevice) {
-      poses.pos.copy(poses.byDevice[selectedDevice].position)
-      poses.target.copy(poses.byDevice[selectedDevice].target)
-    } else if (isEscalating(alarmPhase)) {
-      poses.pos.copy(poses.alarmPos)
-      poses.target.copy(poses.alarmTarget)
-    } else {
-      poses.pos.copy(poses.homePos)
-      poses.target.copy(poses.homeTarget)
+      scratch.pos.lerpVectors(scratch.introPos, scratch.homePos, eased)
+      scratch.target.lerpVectors(scratch.introTarget, scratch.homeTarget, eased)
+      state.camera.position.copy(scratch.pos)
+      rig.target.copy(scratch.target)
+      rig.update()
+      return
     }
 
-    const gain = reducedMotion ? 1 : 1 - Math.exp(-2.6 * delta)
-    state.camera.position.lerp(poses.pos, gain)
-    rig.target.lerp(poses.target, gain)
+    if (!store.isAnimatingCamera || dragging.current) return
+
+    scratch.destination.set(...store.targetPosition)
+    scratch.lookAt.set(...store.lookAtTarget)
+
+    if (store.reducedMotion) {
+      state.camera.position.copy(scratch.destination)
+      rig.target.copy(scratch.lookAt)
+    } else {
+      // smoothTime ~0.35s: arrivo morbido senza overshoot.
+      damp3(state.camera.position, scratch.destination, 0.35, delta)
+      damp3(rig.target, scratch.lookAt, 0.35, delta)
+    }
     rig.update()
+
+    const arrived =
+      state.camera.position.distanceTo(scratch.destination) < ARRIVAL &&
+      rig.target.distanceTo(scratch.lookAt) < ARRIVAL
+
+    if (arrived) {
+      state.camera.position.copy(scratch.destination)
+      rig.target.copy(scratch.lookAt)
+      rig.update()
+      store.releaseCamera()
+    }
   })
 
   return (
@@ -70,15 +94,14 @@ export function CameraRig() {
       }}
       makeDefault
       enabled={exploring}
-      enablePan={false}
-      enableDamping={false}
-      minDistance={0.5}
-      maxDistance={7.2}
-      minPolarAngle={0.55}
-      maxPolarAngle={1.32}
-      target={cameraIntro.target}
+      enablePan
+      enableZoom
+      enableRotate
+      target={cameraHome.target}
       onStart={() => {
         dragging.current = true
+        const store = useAppStore.getState()
+        if (store.isAnimatingCamera) store.releaseCamera()
       }}
       onEnd={() => {
         dragging.current = false
