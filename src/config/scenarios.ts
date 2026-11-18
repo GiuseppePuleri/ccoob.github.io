@@ -9,11 +9,12 @@ export const thermal: ThermalConfig = {
 }
 
 /**
- * 0s deriva, 4s la temperatura tocca la soglia e parte l'SMS,
- * 8s senza conferma parte la chiamata, 12s si raggiunge il picco.
+ * 0s deriva, 4s la temperatura tocca la soglia e parte l'email,
+ * 6s senza conferma parte l'SMS, 8s la chiamata vocale, 12s si raggiunge il picco.
  */
 export const excursionMarks = {
-  smsAtSec: 4,
+  emailAtSec: 4,
+  smsAtSec: 6,
   callAtSec: 8,
   peakAtSec: 12,
   recoverSec: 3,
@@ -21,6 +22,7 @@ export const excursionMarks = {
 
 export const timeline: TimelineStep[] = [
   { atMs: 0, phase: 'drifting' },
+  { atMs: excursionMarks.emailAtSec * 1000, phase: 'email' },
   { atMs: excursionMarks.smsAtSec * 1000, phase: 'sms' },
   { atMs: excursionMarks.callAtSec * 1000, phase: 'call' },
 ]

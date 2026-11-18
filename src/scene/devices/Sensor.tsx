@@ -1,12 +1,18 @@
-import { Outlines } from '@react-three/drei'
-import { stage } from '../../config/devices'
+import { Outlines, RoundedBox } from '@react-three/drei'
+import { sensorBody, stage } from '../../config/devices'
 import { palette } from '../../config/theme'
-import { selectLinkStatus } from '../../store/selectors'
+import { isEscalating } from '../../store/selectors'
 import { useAppStore } from '../../store/useAppStore'
 import { Hotspot } from '../interaction/Hotspot'
 import { useDeviceInteraction } from '../interaction/useDeviceInteraction'
 import { Led } from './Led'
 
+const { width: W, height: H, depth: D, pad: PAD } = sensorBody
+
+/**
+ * Sensore in verticale sulla parete di fondo, tenuto dal biadesivo.
+ * L'origine è il centro del corpo: il retro tocca il biadesivo, il biadesivo la lamiera.
+ */
 export function Sensor() {
   const bind = useDeviceInteraction('sensor')
   const highlighted = useAppStore(
@@ -15,25 +21,27 @@ export function Sensor() {
 
   return (
     <group position={stage.sensor} {...bind}>
-      <mesh castShadow rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.045, 0.045, 0.028, 28]} />
-        <meshStandardMaterial color={palette.plastic} roughness={0.55} metalness={0.05} />
-        {highlighted && <Outlines thickness={0.006} color={palette.oob} />}
+      <mesh position={[0, 0, -(D + PAD) / 2]}>
+        <boxGeometry args={[W - 0.01, H - 0.012, PAD]} />
+        <meshStandardMaterial color="#23262b" roughness={0.95} metalness={0} />
       </mesh>
-      <mesh position={[0, 0.02, 0]} castShadow>
-        <sphereGeometry args={[0.012, 16, 16]} />
-        <meshStandardMaterial color={palette.plasticCool} roughness={0.4} metalness={0.1} />
+      <RoundedBox args={[W, H, D]} radius={0.007} smoothness={4} castShadow>
+        <meshStandardMaterial color={palette.plastic} roughness={0.5} metalness={0.05} />
+        {highlighted && <Outlines thickness={0.005} color={palette.oob} />}
+      </RoundedBox>
+      <mesh position={[0, -0.012, D / 2 + 0.0006]}>
+        <planeGeometry args={[W - 0.02, 0.03]} />
+        <meshStandardMaterial color="#cfc9bc" roughness={0.7} metalness={0} />
       </mesh>
       <Led
-        position={[0.028, 0.016, 0.02]}
-        size={0.006}
+        position={[0, 0.03, D / 2]}
+        size={0.0045}
         colorOf={() => {
           const phase = useAppStore.getState().alarmPhase
-          if (phase === 'sms' || phase === 'call') return palette.alarm
+          if (isEscalating(phase)) return palette.alarm
           if (phase === 'drifting') return palette.amber
           return palette.ledOn
         }}
-        activeOf={() => selectLinkStatus(useAppStore.getState(), 'lora') !== 'down'}
       />
       <Hotspot id="sensor" />
     </group>

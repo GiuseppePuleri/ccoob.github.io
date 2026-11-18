@@ -1,14 +1,26 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { DeviceId } from '../../store/types'
 import { useAppStore } from '../../store/useAppStore'
 
+/**
+ * A frigo aperto la lamiera è trasparente e il sensore si vede attraverso:
+ * il clic deve arrivare al sensore, non fermarsi sulla parete che gli sta davanti.
+ */
+function aimsAtSensorInside(event: ThreeEvent<MouseEvent>): boolean {
+  const { selectedDevice } = useAppStore.getState()
+  if (selectedDevice !== 'fridge' && selectedDevice !== 'sensor') return false
+  return event.intersections.some((hit) => hit.eventObject.userData.device === 'sensor')
+}
+
 export function useDeviceInteraction(id: DeviceId) {
   const selectDevice = useAppStore((state) => state.selectDevice)
   const hoverDevice = useAppStore((state) => state.hoverDevice)
+  const userData = useMemo(() => ({ device: id }), [id])
 
   const onClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
+      if (id === 'fridge' && aimsAtSensorInside(event)) return
       event.stopPropagation()
       const current = useAppStore.getState().selectedDevice
       selectDevice(current === id ? null : id)
@@ -30,5 +42,5 @@ export function useDeviceInteraction(id: DeviceId) {
     document.body.style.cursor = ''
   }, [id, hoverDevice])
 
-  return { onClick, onPointerOver, onPointerOut }
+  return { userData, onClick, onPointerOver, onPointerOut }
 }

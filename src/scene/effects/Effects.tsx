@@ -9,7 +9,7 @@ import { UnsignedByteType } from 'three'
 export function Effects() {
   return (
     <EffectComposer multisampling={0} frameBufferType={UnsignedByteType} enableNormalPass={false}>
-      <Bloom intensity={0.42} luminanceThreshold={0.96} luminanceSmoothing={0.04} mipmapBlur radius={0.45} />
+      <Bloom intensity={0.55} luminanceThreshold={0.94} luminanceSmoothing={0.2} mipmapBlur radius={0.4} />
     </EffectComposer>
   )
 }

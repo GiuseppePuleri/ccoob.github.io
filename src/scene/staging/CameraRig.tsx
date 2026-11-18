@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import { cameraAlarm, cameraHome, cameraIntro, devices } from '../../config/devices'
+import { isEscalating } from '../../store/selectors'
 import type { DeviceId } from '../../store/types'
 import { useAppStore } from '../../store/useAppStore'
 
@@ -48,7 +49,7 @@ export function CameraRig() {
     } else if (selectedDevice) {
       poses.pos.copy(poses.byDevice[selectedDevice].position)
       poses.target.copy(poses.byDevice[selectedDevice].target)
-    } else if (alarmPhase === 'sms' || alarmPhase === 'call') {
+    } else if (isEscalating(alarmPhase)) {
       poses.pos.copy(poses.alarmPos)
       poses.target.copy(poses.alarmTarget)
     } else {
@@ -71,7 +72,7 @@ export function CameraRig() {
       enabled={exploring}
       enablePan={false}
       enableDamping={false}
-      minDistance={1.2}
+      minDistance={0.5}
       maxDistance={7.2}
       minPolarAngle={0.55}
       maxPolarAngle={1.32}

@@ -7,7 +7,6 @@ export const palette = {
   plasticCool: '#d7dee6',
   vial: '#d5efe6',
   oob: '#6ef3df',
-  wifi: '#b7c0cc',
   alarm: '#ff4d5e',
   amber: '#ffb15a',
   ledOn: '#3df08c',

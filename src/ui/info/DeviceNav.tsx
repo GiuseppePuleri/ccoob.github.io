@@ -2,7 +2,7 @@ import { copy, deviceCopy } from '../../content/it'
 import type { DeviceId } from '../../store/types'
 import { useAppStore } from '../../store/useAppStore'
 
-const order: DeviceId[] = ['fridge', 'sensor', 'gateway', 'router', 'smartphone']
+const order: DeviceId[] = ['fridge', 'sensor', 'gateway', 'smartphone']
 
 export function DeviceNav() {
   const selected = useAppStore((state) => state.selectedDevice)

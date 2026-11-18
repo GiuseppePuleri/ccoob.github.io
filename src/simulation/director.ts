@@ -1,5 +1,6 @@
 import { excursionMarks, thermal } from '../config/scenarios'
 import { copy } from '../content/it'
+import { isEscalating } from '../store/selectors'
 import { useAppStore } from '../store/useAppStore'
 import { recoveryDone, temperatureAlong, temperatureRecover } from './temperatureModel'
 
@@ -51,6 +52,9 @@ function runExcursion(): void {
     }
 
     if (state.alarmPhase === 'drifting' && temperature >= thermal.maxC) {
+      state.setAlarmPhase('email')
+      state.setLiveMessage(copy.live.email)
+    } else if (state.alarmPhase === 'email' && elapsed >= excursionMarks.smsAtSec) {
       state.setAlarmPhase('sms')
       state.setLiveMessage(copy.live.sms)
     } else if (state.alarmPhase === 'sms' && elapsed >= excursionMarks.callAtSec) {
@@ -67,7 +71,7 @@ function runExcursion(): void {
 
 function runAcknowledge(): void {
   const state = useAppStore.getState()
-  if (state.alarmPhase !== 'sms' && state.alarmPhase !== 'call') return
+  if (!isEscalating(state.alarmPhase)) return
 
   const id = ++generation
   const from = state.temperatureC
@@ -98,7 +102,6 @@ function runAcknowledge(): void {
 function runReset(): void {
   generation += 1
   useAppStore.setState({
-    itNetwork: 'online',
     alarmPhase: 'idle',
     temperatureC: thermal.nominalC,
     selectedDevice: null,

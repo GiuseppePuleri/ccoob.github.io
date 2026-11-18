@@ -1,7 +1,7 @@
 import { Outlines } from '@react-three/drei'
 import { stage } from '../../config/devices'
 import { palette } from '../../config/theme'
-import { selectLinkStatus } from '../../store/selectors'
+import { isEscalating } from '../../store/selectors'
 import { useAppStore } from '../../store/useAppStore'
 import { Hotspot } from '../interaction/Hotspot'
 import { useDeviceInteraction } from '../interaction/useDeviceInteraction'
@@ -9,7 +9,7 @@ import { Led } from './Led'
 
 function alarmTint(fallback: string): string {
   const phase = useAppStore.getState().alarmPhase
-  if (phase === 'sms' || phase === 'call') return palette.alarm
+  if (isEscalating(phase)) return palette.alarm
   if (phase === 'drifting') return palette.amber
   return fallback
 }
@@ -24,7 +24,7 @@ export function Gateway() {
     <group position={stage.gateway} {...bind}>
       <mesh position={[0, 0.14, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.16, 0.28, 0.05]} />
-        <meshStandardMaterial color={palette.plasticCool} roughness={0.48} metalness={0.08} />
+        <meshStandardMaterial color="#4e575f" roughness={0.55} metalness={0.18} />
         {highlighted && <Outlines thickness={0.008} color={palette.oob} />}
       </mesh>
       <mesh position={[0, 0.14, 0.027]}>
@@ -39,21 +39,9 @@ export function Gateway() {
         <cylinderGeometry args={[0.0035, 0.0035, 0.2, 8]} />
         <meshStandardMaterial color="#9aa3ae" metalness={0.8} roughness={0.3} />
       </mesh>
-      <Led
-        position={[-0.04, 0.05, 0.028]}
-        colorOf={() => palette.ledOn}
-        activeOf={() => true}
-      />
-      <Led
-        position={[0, 0.05, 0.028]}
-        colorOf={() => alarmTint(palette.oob)}
-        activeOf={() => selectLinkStatus(useAppStore.getState(), 'lora') !== 'down'}
-      />
-      <Led
-        position={[0.04, 0.05, 0.028]}
-        colorOf={() => alarmTint(palette.oob)}
-        activeOf={() => selectLinkStatus(useAppStore.getState(), 'cellular') !== 'down'}
-      />
+      <Led position={[-0.04, 0.05, 0.028]} colorOf={() => palette.ledOn} />
+      <Led position={[0, 0.05, 0.028]} colorOf={() => alarmTint(palette.oob)} />
+      <Led position={[0.04, 0.05, 0.028]} colorOf={() => alarmTint(palette.oob)} />
       <Hotspot id="gateway" />
     </group>
   )

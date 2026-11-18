@@ -84,14 +84,6 @@ h1, h2, p { font-weight: 400; }
 
 .xo-temp.is-hot { color: var(--alarm); }
 
-.xo-network {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.xo-network[data-offline="true"] { color: var(--alarm); }
-
 .xo-links {
   list-style: none;
   display: flex;
@@ -120,7 +112,7 @@ h1, h2, p { font-weight: 400; }
 
 .xo-links li[data-status="active"] { border-top-color: var(--accent); color: var(--accent); }
 .xo-links li[data-status="alert"] { border-top-color: var(--alarm); color: var(--alarm); }
-.xo-links li[data-status="down"] { border-top-color: transparent; opacity: 0.45; }
+.xo-links li[data-status="standby"] { border-top-color: var(--line); color: var(--ink); }
 
 .xo-devices {
   grid-column: 1;
@@ -161,11 +153,6 @@ h1, h2, p { font-weight: 400; }
   align-self: end;
 }
 
-.xo-attack[aria-pressed="true"] {
-  border-color: var(--alarm);
-  color: var(--alarm);
-}
-
 .xo-heat[aria-pressed="true"] {
   border-color: var(--amber);
   color: var(--amber);
@@ -194,14 +181,91 @@ button:focus-visible {
 .xo-phone p { margin: 0 0 12px; line-height: 1.45; }
 .xo-phone button { pointer-events: auto; }
 
+.xo-steps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 4px 0 12px;
+  padding: 0;
+}
+
+.xo-steps li {
+  padding-top: 7px;
+  border-top: 2px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.xo-steps li[data-state="done"] { border-top-color: rgba(255, 77, 94, 0.5); color: var(--ink); }
+.xo-steps li[data-state="current"] { border-top-color: var(--alarm); color: var(--alarm); }
+
+/*
+ * Pop-up dei dispositivi. Il contenitore sta sul punto d'ancoraggio in scena;
+ * la scheda viene spostata di lato dal codice e la linea guida le unisce.
+ * Tutto lascia passare i clic verso la scena, tranne il tasto "Chiudi".
+ */
+.xo-callout { pointer-events: none; }
+
+.xo-leader {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.xo-leader line {
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.xo-leader circle { fill: var(--accent); }
+
+.xo-leader .xo-leader-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0.45;
+}
+
 .xo-pop {
-  width: min(240px, 68vw);
-  padding: 12px 14px 14px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: min(264px, 72vw);
+  padding: 12px 38px 14px 14px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-left: 2px solid var(--accent);
   color: var(--ink);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
 }
+
+.xo-pop-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.xo-pop-close:hover { border-color: var(--accent); color: var(--accent); }
 
 .xo-pop h2 { margin: 0 0 6px; font-size: 22px; }
 .xo-pop p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }

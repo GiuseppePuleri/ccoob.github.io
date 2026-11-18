@@ -1,13 +1,13 @@
-export type DeviceId = 'fridge' | 'sensor' | 'gateway' | 'router' | 'smartphone'
-export type LinkId = 'lora' | 'cellular' | 'wifi'
-export type LinkStatus = 'active' | 'alert' | 'down'
-export type ItNetwork = 'online' | 'offline'
-export type AlarmPhase = 'idle' | 'drifting' | 'sms' | 'call' | 'acknowledged'
+export type DeviceId = 'fridge' | 'sensor' | 'gateway' | 'smartphone'
+export type LinkId = 'lora' | 'cellular'
+/** `standby`: il canale è pronto ma non sta trasmettendo. */
+export type LinkStatus = 'active' | 'alert' | 'standby'
+/** L'escalation è email, poi SMS, poi chiamata vocale. */
+export type AlarmPhase = 'idle' | 'drifting' | 'email' | 'sms' | 'call' | 'acknowledged'
 export type AppPhase = 'intro' | 'explore'
 export type QualityTier = 'low' | 'high'
 
 export interface SimulationState {
-  itNetwork: ItNetwork
   /** `idle` è il funzionamento normale. */
   alarmPhase: AlarmPhase
   /** Arrotondata a 0,1 °C. Il director la aggiorna a circa 4 Hz. */
@@ -15,8 +15,6 @@ export interface SimulationState {
 }
 
 export interface SimulationActions {
-  triggerBlackout: () => void
-  restoreNetwork: () => void
   triggerExcursion: () => void
   acknowledgeAlarm: () => void
   reset: () => void
@@ -56,7 +54,10 @@ export interface CameraPreset {
 export interface DeviceConfig {
   id: DeviceId
   modelUrl: string
+  /** Anello di selezione, sopra il dispositivo. */
   hotspotAnchor: [number, number, number]
+  /** Punto sul corpo del dispositivo da cui parte la linea guida del pop-up. */
+  calloutAnchor: [number, number, number]
   cameraPreset: CameraPreset
 }
 

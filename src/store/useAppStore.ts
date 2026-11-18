@@ -5,7 +5,6 @@ import { simulation } from '../simulation/director'
 import type { AlarmPhase, AppStore, DeviceId, QualityTier } from './types'
 
 const initial = {
-  itNetwork: 'online' as const,
   alarmPhase: 'idle' as const,
   temperatureC: thermal.nominalC,
   appPhase: 'intro' as const,
@@ -18,16 +17,6 @@ const initial = {
 
 export const useAppStore = create<AppStore>((set, get) => ({
   ...initial,
-
-  triggerBlackout: () => {
-    if (get().itNetwork === 'offline') return
-    set({ itNetwork: 'offline', liveMessage: copy.live.blackout })
-  },
-
-  restoreNetwork: () => {
-    if (get().itNetwork === 'online') return
-    set({ itNetwork: 'online', liveMessage: copy.live.restored })
-  },
 
   triggerExcursion: () => {
     simulation.excursion()
