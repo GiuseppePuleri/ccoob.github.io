@@ -1,9 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Il repository è GiuseppePuleri/ccoob.github.io: Pages pubblica sotto questo prefisso.
+// Deploy su Vercel: asset dalla root del dominio.
 export default defineConfig({
-  base: '/ccoob.github.io/',
+  base: '/',
   plugins: [react()],
   build: {
     rollupOptions: {
